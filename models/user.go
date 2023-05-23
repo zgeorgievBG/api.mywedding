@@ -9,29 +9,28 @@ import (
 
 type User struct {
 	gorm.Model
-	UserID      string    `json:"user_id"`
-	Email       string    `json:"email" gorm:"unique"`
-	Password    string    `json:"password"`
+	UserID      string    `db:"user_id"`
+	Email       string    `db:"email" gorm:"unique; not null"`
+	Password    string    `db:"password" gorm:"not null"`
 	FirstName   string    `json:"first_name"`
 	LastName    string    `json:"last_name"`
-	DateOfBirth time.Time `json:"date_of_birth"`
-	Gender      string    `json:"gender"`
-	Address     string    `json:"address"`
-	PhoneNumber string    `json:"phone_number"`
+	DateOfBirth time.Time `db:"date_of_birth" gorm:"not null"`
+	Gender      string    `db:"gender" gorm:"not null"`
+	Address     string    `db:"address" gorm:"not null"`
+	PhoneNumber string    `db:"phone_number" gorm:"not null"`
 }
 
 type Artist struct {
 	gorm.Model
-	UserID         string `json:"user_id"`
-	User           User   `gorm:"foreignKey:UserID"`
-	Price          int    `json:"price"`
+	ArtistID       string `db:"artist_id" gorm:"foreignKey:UserID"`
+	Price          int    `db:"price" gorm:"not null"`
 	ProfilePicture string `json:"profile_picture"`
-	Description    string `json:"description"`
-	ArtistType     string `json:"artist_type"`
-	OperatingIn    string `json:"operating_in"`
-	Instagram      string `json:"instagram"`
-	Facebook       string `json:"facebook"`
-	Website        string `json:"website"`
+	Description    string `db:"description"`
+	ArtistType     string `json:"artist_type" gorm:"not null"`
+	OperatingIn    string `json:"operating_in" gorm:"not null"`
+	Instagram      string `db:"instagram"`
+	Facebook       string `db:"facebook"`
+	Website        string `db:"website"`
 }
 
 func (user *User) HashPassword(password string) error {

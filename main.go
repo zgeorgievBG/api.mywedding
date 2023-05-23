@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	database.Connect("root:@tcp(localhost:3310)/mywedding?parseTime=true")
+	database.Connect()
 	database.Migrate()
 	router := initRouter()
 	router.Run(":8080")
@@ -20,12 +20,12 @@ func initRouter() *gin.Engine {
 	{
 		api.POST("/users/register", controllers.RegisterUser)
 		api.POST("/users/token", controllers.GenerateToken)
-		api.GET("/partners", controllers.GetPartners)
+		api.GET("/partners", controllers.GetAllPartnersCards)
 		secured := api.Group("/secured").Use(middlewares.Auth())
 		{
-			secured.POST("/partners", controllers.CreatePartner)
-			secured.PUT("/partners", controllers.UpdatePartner)
-			secured.DELETE("/partners", controllers.DeletePartner)
+			secured.POST("/partners", controllers.CreatePartnerCard)
+			secured.PUT("/partners/:id", controllers.UpdatePartnerCard)
+			secured.DELETE("/partners/:id", controllers.DeletePartner)
 		}
 	}
 	return router

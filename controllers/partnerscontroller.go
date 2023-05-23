@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"api.mywedding/auth"
 	"api.mywedding/database"
 	"api.mywedding/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func GetPartners(context *gin.Context) {
+func GetAllPartnersCards(context *gin.Context) {
 	var users []models.User
 	var artists []models.Artist
 
@@ -18,38 +19,61 @@ func GetPartners(context *gin.Context) {
 	fmt.Printf("%+v\n", artists)
 }
 
-func CreatePartner(context *gin.Context) {
+func CreatePartnerCard(context *gin.Context) {
+	tokenString := context.GetHeader("Authorization")
+	_, decodedUserId, _ := auth.ValidateToken(tokenString)
 	var artist models.Artist
+	record := database.DB.Where("artist_id = ?", decodedUserId).First(&artist)
+
+	if record.Error == nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "User already created a card"})
+		context.Abort()
+		return
+	}
+
 	if err := context.ShouldBindJSON(&artist); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		context.Abort()
 		return
 	}
-
-	record := database.DB.Having("user_id = ?", artist.UserID)
-	if record.Error != nil {
-		fmt.Println("There is no such user")
-	}
-
+	artist.ArtistID = decodedUserId
 	result := database.DB.Create(&artist)
 	if result.Error != nil {
-		fmt.Println("Error creating artist")
+		fmt.Println("Error creating artist card")
 	}
-
-	context.JSON(http.StatusCreated, gin.H{"id": artist.ID, "user_id": artist.UserID})
-
+	context.JSON(http.StatusCreated, gin.H{"id": artist.ID, "artist_id": artist.ArtistID})
 }
 
-func UpdatePartner(context *gin.Context) {
+func UpdatePartnerCard(context *gin.Context) {
+	cardId, _ := context.Params.Get("id")
+	if cardId == "" {
+		fmt.Println("No card id provided")
+	}
+	tokenString := context.GetHeader("Authorization")
+	_, decodedUserId, _ := auth.ValidateToken(tokenString)
 	var data models.Artist
 	var artist models.Artist
+
+	record := database.DB.Where("id = ?", cardId).First(&artist)
+
+	if record.Error != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "There is no artist card for this user"})
+		context.Abort()
+		return
+	}
+	fmt.Println(decodedUserId, artist.ArtistID)
+	if artist.ArtistID != decodedUserId {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "You are not allowed to update this card"})
+		context.Abort()
+		return
+	}
 	if err := context.ShouldBindJSON(&data); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		context.Abort()
 		return
 	}
 
-	database.DB.Model(&artist).Where("user_id = ?", data.UserID).Updates(models.Artist{Price: data.Price, ProfilePicture: data.ProfilePicture, Description: data.Description, ArtistType: data.ArtistType, OperatingIn: data.OperatingIn, Instagram: data.Instagram, Facebook: data.Facebook, Website: data.Website})
+	database.DB.Model(&artist).Where("id = ?", cardId).Updates(models.Artist{Price: data.Price, ProfilePicture: data.ProfilePicture, Description: data.Description, ArtistType: data.ArtistType, OperatingIn: data.OperatingIn, Instagram: data.Instagram, Facebook: data.Facebook, Website: data.Website})
 
 	context.JSON(http.StatusOK, gin.H{"message": "Artist updated successfully"})
 }
@@ -63,7 +87,7 @@ func DeletePartner(context *gin.Context) {
 		return
 	}
 
-	database.DB.Where("user_id = ?", data.UserID).Delete(&artist)
+	database.DB.Where("user_id = ?", data.ArtistID).Delete(&artist)
 
 	context.JSON(http.StatusOK, gin.H{"message": "Artist deleted successfully"})
 }

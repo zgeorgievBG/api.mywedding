@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"api.mywedding/database"
@@ -26,6 +27,7 @@ func RegisterUser(context *gin.Context) {
 	result := database.DB.First(&existingUser, "email = ?", user.Email)
 
 	if result.Error != nil {
+		fmt.Println("->", user.FirstName)
 		userID := uuid.NewV4().String()
 		user.UserID = userID
 		record := database.DB.Create(&user)
