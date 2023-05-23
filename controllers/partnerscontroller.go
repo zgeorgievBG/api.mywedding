@@ -8,15 +8,25 @@ import (
 	"api.mywedding/database"
 	"api.mywedding/models"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func GetAllPartnersCards(context *gin.Context) {
-	var users []models.User
-	var artists []models.Artist
+	type result struct {
+		UserID         string
+		Email          string
+		FirstName      string
+		LastName       string
+		Price          string
+		Description    string
+		ProfilePicture string
+		ArtistType     string
+	}
 
-	database.DB.Joins("JOIN artists ON artists.user_id = users.user_id").Find(&users).Find(&artists)
-	fmt.Printf("%+v\n", artists)
+	var result1 []result
+
+	database.DB.Model(&models.User{}).Select("users.user_id,users.email,users.first_name, users.last_name, artists.price, artists.profile_picture, artists.description, artists.artist_type, artists.operating_in").Joins("left join artists on artists.artist_id = users.user_id").Scan(&result1)
+	context.JSON(http.StatusCreated, gin.H{"users": result1})
+
 }
 
 func CreatePartnerCard(context *gin.Context) {
@@ -90,12 +100,4 @@ func DeletePartner(context *gin.Context) {
 	database.DB.Where("user_id = ?", data.ArtistID).Delete(&artist)
 
 	context.JSON(http.StatusOK, gin.H{"message": "Artist deleted successfully"})
-}
-
-type PostController struct {
-	DB *gorm.DB
-}
-
-func NewPostController(DB *gorm.DB) PostController {
-	return PostController{DB}
 }
