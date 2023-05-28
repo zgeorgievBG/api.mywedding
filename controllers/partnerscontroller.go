@@ -12,20 +12,23 @@ import (
 
 func GetAllPartnersCards(context *gin.Context) {
 	type result struct {
-		UserID         string
-		Email          string
-		FirstName      string
-		LastName       string
-		Price          string
-		Description    string
-		ProfilePicture string
-		ArtistType     string
+		UserID         string `json:"user_id"`
+		Email          string `json:"email"`
+		FirstName      string `json:"first_name"`
+		LastName       string `json:"last_name"`
+		Price          string `json:"price"`
+		Description    string `json:"description"`
+		ProfilePicture string `json:"profile_picture"`
+		ArtistType     string `json:"artist_type"`
+		IsVisible      int16  `json:"is_visible"`
+		OperatingIn    string `json:"operating_in"`
 	}
 
 	var result1 []result
+	// artistType := context.Query("type")
 
-	database.DB.Model(&models.User{}).Select("users.user_id,users.email,users.first_name, users.last_name, artists.price, artists.profile_picture, artists.description, artists.artist_type, artists.operating_in").Joins("left join artists on artists.artist_id = users.user_id").Scan(&result1)
-	context.JSON(http.StatusCreated, gin.H{"users": result1})
+	database.DB.Model(&models.User{}).Select("users.user_id,users.email,users.first_name, users.last_name, artists.price, artists.profile_picture, artists.description, artists.artist_type, artists.operating_in, artists.is_visible").Joins(`left join artists on artists.artist_id = users.user_id`).Scan(&result1)
+	context.JSON(http.StatusCreated, gin.H{"data": result1})
 
 }
 
@@ -47,6 +50,7 @@ func CreatePartnerCard(context *gin.Context) {
 		return
 	}
 	artist.ArtistID = decodedUserId
+	artist.IsVisible = 1
 	result := database.DB.Create(&artist)
 	if result.Error != nil {
 		fmt.Println("Error creating artist card")
@@ -85,7 +89,7 @@ func UpdatePartnerCard(context *gin.Context) {
 
 	database.DB.Model(&artist).Where("id = ?", cardId).Updates(models.Artist{Price: data.Price, ProfilePicture: data.ProfilePicture, Description: data.Description, ArtistType: data.ArtistType, OperatingIn: data.OperatingIn, Instagram: data.Instagram, Facebook: data.Facebook, Website: data.Website})
 
-	context.JSON(http.StatusOK, gin.H{"message": "Artist updated successfully"})
+	context.JSON(http.StatusOK, gin.H{"message": "Artist card updated successfully"})
 }
 
 func DeletePartner(context *gin.Context) {
@@ -99,5 +103,5 @@ func DeletePartner(context *gin.Context) {
 
 	database.DB.Where("user_id = ?", data.ArtistID).Delete(&artist)
 
-	context.JSON(http.StatusOK, gin.H{"message": "Artist deleted successfully"})
+	context.JSON(http.StatusOK, gin.H{"message": "Artist card deleted successfully"})
 }

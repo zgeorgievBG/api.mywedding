@@ -31,6 +31,7 @@ type Artist struct {
 	Instagram      string `db:"instagram"`
 	Facebook       string `db:"facebook"`
 	Website        string `db:"website"`
+	IsVisible      int16  `db:"is_visible"`
 }
 
 func (user *User) HashPassword(password string) error {

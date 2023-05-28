@@ -17,7 +17,7 @@ type TokenRequest struct {
 func GenerateToken(context *gin.Context) {
 	var request TokenRequest
 	var user models.User
-	if err := context.ShouldBind(&request); err != nil {
+	if err := context.ShouldBindJSON(&request); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		context.Abort()
 		return
@@ -32,7 +32,7 @@ func GenerateToken(context *gin.Context) {
 	}
 	credentialError := user.CheckPassword(request.Password)
 	if credentialError != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials", "statusCode": http.StatusUnauthorized})
 		context.Abort()
 		return
 	}
